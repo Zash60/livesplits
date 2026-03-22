@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
 import com.livesplits.domain.model.GameDomain
 import com.livesplits.domain.model.SpeedrunGameSuggestion
 import com.livesplits.network.SpeedrunRepository
@@ -135,9 +134,9 @@ class GamesListViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(showDeleteConfirm = false)
     }
 
-    fun addGame(name: String) {
+    fun addGame(name: String, speedrunGameId: String? = null) {
         viewModelScope.launch {
-            insertGameUseCase(name)
+            insertGameUseCase(name, speedrunGameId = speedrunGameId)
             hideAddDialog()
         }
     }
