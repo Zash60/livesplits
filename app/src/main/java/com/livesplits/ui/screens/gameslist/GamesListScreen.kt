@@ -171,40 +171,20 @@ fun GamesListScreen(
             TopAppBar(
                 title = { Text("LiveSplits") },
                 actions = {
-                    if (uiState.selectedGameForAction != null) {
+                    uiState.selectedGameForAction?.let { selectedGame ->
                         IconButton(onClick = {
-                            viewModel.showEditDialog(uiState.selectedGameForAction)
+                            viewModel.showEditDialog(selectedGame)
                         }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
                         IconButton(onClick = {
-                            viewModel.showDeleteConfirm(uiState.selectedGameForAction)
+                            viewModel.showDeleteConfirm(selectedGame)
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
                     }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        DropdownMenu(
-                            expanded = uiState.showImportInstalledGames,
-                            onDismissRequest = { viewModel.hideImportInstalledGames() }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Import Installed Games") },
-                                onClick = {
-                                    viewModel.importInstalledGames(context)
-                                }
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (uiState.showImportInstalledGames) {
-                        IconButton(onClick = { viewModel.hideImportInstalledGames() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close")
-                        }
                     }
                 }
             )
@@ -293,54 +273,58 @@ fun GamesListScreen(
     }
 
     // Edit Game Dialog
-    if (uiState.showEditDialog && uiState.selectedGame != null) {
-        LaunchedEffect(uiState.selectedGame) {
-            editGameName = uiState.selectedGame.name
-        }
-        AlertDialog(
-            onDismissRequest = { viewModel.hideEditDialog() },
-            title = { Text("Edit Game") },
-            text = {
-                OutlinedTextField(
-                    value = editGameName,
-                    onValueChange = { editGameName = it },
-                    label = { Text("Game Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.updateGame(uiState.selectedGame!!, editGameName) },
-                    enabled = editGameName.isNotBlank()
-                ) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideEditDialog() }) {
-                    Text("Cancel")
-                }
+    if (uiState.showEditDialog) {
+        uiState.selectedGame?.let { selectedGame ->
+            LaunchedEffect(selectedGame) {
+                editGameName = selectedGame.name
             }
-        )
+            AlertDialog(
+                onDismissRequest = { viewModel.hideEditDialog() },
+                title = { Text("Edit Game") },
+                text = {
+                    OutlinedTextField(
+                        value = editGameName,
+                        onValueChange = { editGameName = it },
+                        label = { Text("Game Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = { viewModel.updateGame(selectedGame, editGameName) },
+                        enabled = editGameName.isNotBlank()
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideEditDialog() }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 
     // Delete Confirmation Dialog
-    if (uiState.showDeleteConfirm && uiState.selectedGame != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideDeleteConfirm() },
-            title = { Text("Delete Game") },
-            text = { Text("Are you sure you want to delete '${uiState.selectedGame!!.name}'? This will also delete all categories and splits.") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.deleteGame(uiState.selectedGame!!) }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+    if (uiState.showDeleteConfirm) {
+        uiState.selectedGame?.let { selectedGame ->
+            AlertDialog(
+                onDismissRequest = { viewModel.hideDeleteConfirm() },
+                title = { Text("Delete Game") },
+                text = { Text("Are you sure you want to delete '${selectedGame.name}'? This will also delete all categories and splits.") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.deleteGame(selectedGame) }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 }

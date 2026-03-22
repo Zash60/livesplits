@@ -196,11 +196,11 @@ fun SplitsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = uiState.categoryName,
                         maxLines = 1
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -208,14 +208,14 @@ fun SplitsScreen(
                     }
                 },
                 actions = {
-                    if (uiState.selectedSegmentForAction != null) {
+                    uiState.selectedSegmentForAction?.let { selectedSegment ->
                         IconButton(onClick = {
-                            viewModel.showEditSegmentDialog(uiState.selectedSegmentForAction)
+                            viewModel.showEditSegmentDialog(selectedSegment)
                         }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
                         IconButton(onClick = {
-                            viewModel.showDeleteConfirm(uiState.selectedSegmentForAction)
+                            viewModel.showDeleteConfirm(selectedSegment)
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
@@ -364,70 +364,71 @@ fun SplitsScreen(
     }
 
     // Edit Segment Dialog
-    if (uiState.showEditSegmentDialog && uiState.selectedSegment != null) {
-        LaunchedEffect(uiState.selectedSegment) {
-            editSegmentName = uiState.selectedSegment.name
-            editSegmentPosition = uiState.selectedSegment.position.toString()
-            editPbTime = uiState.selectedSegment.pbTimeMs.toString()
-            editBestTime = uiState.selectedSegment.bestTimeMs.toString()
-        }
-        AlertDialog(
-            onDismissRequest = { viewModel.hideEditSegmentDialog() },
-            title = { Text("Edit Split") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = editSegmentName,
-                        onValueChange = { editSegmentName = it },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = editSegmentPosition,
-                        onValueChange = { editSegmentPosition = it },
-                        label = { Text("Position") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = editPbTime,
-                        onValueChange = { editPbTime = it },
-                        label = { Text("PB Time (ms)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = editBestTime,
-                        onValueChange = { editBestTime = it },
-                        label = { Text("Best Time (ms)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateSegment(
-                            uiState.selectedSegment!!,
-                            editSegmentName,
-                            editSegmentPosition.toIntOrNull() ?: uiState.selectedSegment.position
+    if (uiState.showEditSegmentDialog) {
+        uiState.selectedSegment?.let { selectedSegment ->
+            LaunchedEffect(selectedSegment) {
+                editSegmentName = selectedSegment.name
+                editSegmentPosition = selectedSegment.position.toString()
+                editPbTime = selectedSegment.pbTimeMs.toString()
+                editBestTime = selectedSegment.bestTimeMs.toString()
+            }
+            AlertDialog(
+                onDismissRequest = { viewModel.hideEditSegmentDialog() },
+                title = { Text("Edit Split") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = editSegmentName,
+                            onValueChange = { editSegmentName = it },
+                            label = { Text("Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        viewModel.updateSegmentTimes(
-                            uiState.selectedSegment!!.id,
-                            editPbTime.toLongOrNull(),
-                            editBestTime.toLongOrNull()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = editSegmentPosition,
+                            onValueChange = { editSegmentPosition = it },
+                            label = { Text("Position") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                        viewModel.hideEditSegmentDialog()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = editPbTime,
+                            onValueChange = { editPbTime = it },
+                            label = { Text("PB Time (ms)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = editBestTime,
+                            onValueChange = { editBestTime = it },
+                            label = { Text("Best Time (ms)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
-                ) {
-                    Text("Save")
-                }
-            },
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateSegment(
+                                selectedSegment,
+                                editSegmentName,
+                                editSegmentPosition.toIntOrNull() ?: selectedSegment.position
+                            )
+                            viewModel.updateSegmentTimes(
+                                selectedSegment.id,
+                                editPbTime.toLongOrNull(),
+                                editBestTime.toLongOrNull()
+                            )
+                            viewModel.hideEditSegmentDialog()
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
             dismissButton = {
                 TextButton(onClick = { viewModel.hideEditSegmentDialog() }) {
                     Text("Cancel")
@@ -437,22 +438,24 @@ fun SplitsScreen(
     }
 
     // Delete Confirmation Dialog
-    if (uiState.showDeleteConfirm && uiState.selectedSegment != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideDeleteConfirm() },
-            title = { Text("Delete Split") },
-            text = { Text("Are you sure you want to delete '${uiState.selectedSegment!!.name}'?") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.deleteSegment(uiState.selectedSegment!!) }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+    if (uiState.showDeleteConfirm) {
+        uiState.selectedSegment?.let { selectedSegment ->
+            AlertDialog(
+                onDismissRequest = { viewModel.hideDeleteConfirm() },
+                title = { Text("Delete Split") },
+                text = { Text("Are you sure you want to delete '${selectedSegment.name}'?") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.deleteSegment(selectedSegment) }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 }
 

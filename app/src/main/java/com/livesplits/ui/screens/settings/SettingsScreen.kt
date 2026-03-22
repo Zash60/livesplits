@@ -1,15 +1,20 @@
 package com.livesplits.ui.screens.settings
 
 import android.graphics.Color
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
@@ -365,7 +370,7 @@ fun SettingsSection(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
         content()
-        HorizontalDivider(
+        Divider(
             modifier = Modifier.padding(top = 8.dp),
             color = MaterialTheme.colorScheme.outlineVariant
         )
@@ -446,19 +451,11 @@ fun ColorPickerItem(
                     .padding(4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
+                Canvas(
                     modifier = Modifier
                         .size(32.dp)
-                        .padding(4.dp)
                 ) {
-                    androidx.compose.foundation.Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawCircle(androidx.compose.ui.graphics.Color(color))
-                        }
-                    }
+                    drawCircle(androidx.compose.ui.graphics.Color(color))
                 }
             }
             IconButton(onClick = onClick) {
@@ -541,7 +538,7 @@ fun ColorGrid(
 ) {
     val columns = 4
     val rows = (colors.size + columns - 1) / columns
-    
+
     Column(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -562,7 +559,7 @@ fun ColorGrid(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            androidx.compose.foundation.Canvas(
+                            Canvas(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 val radius = size.minDimension / 2
@@ -574,7 +571,7 @@ fun ColorGrid(
                                     drawCircle(
                                         androidx.compose.ui.graphics.Color(color),
                                         radius = radius,
-                                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
+                                        style = Stroke(width = 6f)
                                     )
                                 }
                             }

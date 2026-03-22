@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Handler
@@ -18,14 +19,17 @@ import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import com.livesplits.R
 import com.livesplits.data.local.entity.Segment
+import com.livesplits.data.settings.AppSettings
 import com.livesplits.data.settings.SettingsRepository
 import com.livesplits.domain.model.ComparisonMode
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * Foreground Service that displays a draggable timer overlay.
@@ -130,7 +134,7 @@ class TimerOverlayService : Service() {
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "InlinedApi")
     private fun startTimerOverlay() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
@@ -166,7 +170,6 @@ class TimerOverlayService : Service() {
             // Start timer updates
             startTimerUpdates()
         } catch (e: Exception) {
-            // Handle case where overlay permission not granted
             e.printStackTrace()
         }
     }
@@ -187,8 +190,8 @@ class TimerOverlayService : Service() {
         overlayView?.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    initialX = layoutParams.x
-                    initialY = layoutParams.y
+                    initialX = layoutParams.x.toFloat()
+                    initialY = layoutParams.y.toFloat()
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     lastTouchX = event.rawX
@@ -201,11 +204,10 @@ class TimerOverlayService : Service() {
                     val deltaX = event.rawX - initialTouchX
                     val deltaY = event.rawY - initialTouchY
                     
-                    // Only consider it dragging if moved more than threshold
                     if (abs(deltaX) > 10 || abs(deltaY) > 10) {
                         isDragging = true
-                        layoutParams.x = initialX + (event.rawX - initialTouchX).toInt()
-                        layoutParams.y = initialY + (event.rawY - initialTouchY).toInt()
+                        layoutParams.x = (initialX + (event.rawX - initialTouchX)).toInt()
+                        layoutParams.y = (initialY + (event.rawY - initialTouchY)).toInt()
                         windowManager?.updateViewLayout(overlayView, layoutParams)
                         lastTouchX = event.rawX
                         lastTouchY = event.rawY
@@ -218,15 +220,12 @@ class TimerOverlayService : Service() {
                     val deltaY = abs(event.rawY - lastTouchY)
                     
                     if (!isDragging && touchDuration < 300 && deltaX < 10 && deltaY < 10) {
-                        // Tap - handle timer action
                         handleTimerTap()
                     } else if (!isDragging && touchDuration >= 300) {
-                        // Long press
                         handleTimerLongPress()
                     }
                     
-                    // Save position
-                    saveTimerPosition(layoutParams.x, layoutParams.y)
+                    saveTimerPosition(layoutParams.x.toFloat(), layoutParams.y.toFloat())
                     true
                 }
                 else -> false
@@ -236,28 +235,21 @@ class TimerOverlayService : Service() {
 
     private fun handleTimerTap() {
         if (!isRunning && !isFinished) {
-            // Start timer
             startTimer()
         } else if (isRunning) {
             if (segments.isNotEmpty() && currentSplitIndex < segments.size) {
-                // Record split
                 recordSplit()
             }
             if (currentSplitIndex >= segments.size || segments.isEmpty()) {
-                // Stop timer
                 stopTimer()
             }
-        } else if (isFinished) {
-            // Timer finished, do nothing or show summary
         }
     }
 
     private fun handleTimerLongPress() {
         if (isRunning) {
-            // Reset immediately without saving
             resetTimer()
         } else if (isFinished) {
-            // Offer to save PB if improved
             offerSavePb()
         }
     }
@@ -277,10 +269,7 @@ class TimerOverlayService : Service() {
         if (currentSplitIndex < segments.size) {
             val splitTime = currentTimeMs - accumulatedSplitTimes.lastOrNull() ?: 0L
             accumulatedSplitTimes.add(currentTimeMs)
-            
-            // Update delta display
             updateDelta()
-            
             currentSplitIndex++
             
             if (currentSplitIndex >= segments.size) {
@@ -301,12 +290,10 @@ class TimerOverlayService : Service() {
         isFinished = true
         stopTimerUpdates()
         
-        // Check if new PB
         val totalTime = currentTimeMs
         val pbTime = segments.sumOf { it.pbTimeMs }
         
         if (pbTime == 0L || totalTime < pbTime) {
-            // New PB!
             updateTimerColor(ColorType.PB)
         }
         
@@ -329,7 +316,6 @@ class TimerOverlayService : Service() {
         val pbTime = segments.sumOf { it.pbTimeMs }
         
         if (pbTime == 0L || totalTime < pbTime) {
-            // New PB - save it
             CoroutineScope(Dispatchers.Main).launch {
                 saveNewPb(totalTime)
             }
@@ -337,8 +323,6 @@ class TimerOverlayService : Service() {
     }
 
     private suspend fun saveNewPb(newTimeMs: Long) {
-        // Update category PB
-        // This would require repository access - simplified here
         settingsRepository.clearCurrentTimerInfo()
     }
 
@@ -360,7 +344,7 @@ class TimerOverlayService : Service() {
                     elapsedTimeMs = currentTimeMs
                     updateOverlay()
                 }
-                delay(10) // Update every 10ms
+                delay(10)
             }
         }
     }
@@ -373,7 +357,6 @@ class TimerOverlayService : Service() {
     private fun updateOverlay() {
         timerTextView?.text = formatTime(currentTimeMs)
         
-        // Update split name
         if (settings.showSplitName && currentSplitIndex < segments.size) {
             splitNameTextView?.text = segments[currentSplitIndex].name
             splitNameTextView?.visibility = View.VISIBLE
@@ -381,7 +364,6 @@ class TimerOverlayService : Service() {
             splitNameTextView?.visibility = View.GONE
         }
         
-        // Update delta
         if (settings.showDelta && isRunning) {
             updateDelta()
             deltaTextView?.visibility = View.VISIBLE
@@ -389,7 +371,6 @@ class TimerOverlayService : Service() {
             deltaTextView?.visibility = View.GONE
         }
         
-        // Update colors
         updateTimerColor()
     }
 
@@ -410,7 +391,6 @@ class TimerOverlayService : Service() {
                 val delta = currentSplitTime - compareTime
                 deltaTextView?.text = formatDelta(delta)
                 
-                // Update color based on delta
                 if (delta < 0) {
                     updateTimerColor(ColorType.AHEAD)
                 } else {
@@ -426,7 +406,6 @@ class TimerOverlayService : Service() {
             ColorType.BEHIND -> settings.colorBehind
             ColorType.PB -> settings.colorPb
             null -> {
-                // Auto-determine based on current state
                 if (isFinished && segments.isNotEmpty()) {
                     val totalTime = elapsedTimeMs
                     val pbTime = segments.sumOf { it.pbTimeMs }
@@ -436,7 +415,7 @@ class TimerOverlayService : Service() {
                         settings.colorAhead
                     }
                 } else {
-                    settings.colorAhead // Default
+                    settings.colorAhead
                 }
             }
         }
@@ -471,9 +450,9 @@ class TimerOverlayService : Service() {
         return "${sign}${seconds}.${milliseconds.toString().padStart(2, '0')}"
     }
 
-    private fun saveTimerPosition(x: Int, y: Int) {
+    private fun saveTimerPosition(x: Float, y: Float) {
         CoroutineScope(Dispatchers.IO).launch {
-            settingsRepository.saveTimerPosition(categoryId, x.toFloat(), y.toFloat())
+            settingsRepository.saveTimerPosition(categoryId, x, y)
         }
     }
 

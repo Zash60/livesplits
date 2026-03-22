@@ -1,7 +1,9 @@
 package com.livesplits.network
 
+import com.livesplits.domain.model.LeaderboardEntry
+import com.livesplits.domain.model.SpeedrunCategorySuggestion
+import com.livesplits.domain.model.SpeedrunGameSuggestion
 import com.livesplits.network.api.SpeedrunApi
-import com.livesplits.network.api.SplitsIoApi
 import com.livesplits.network.model.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -99,14 +101,15 @@ class SpeedrunRepository @Inject constructor() {
         return try {
             val response = api.getLeaderboard(gameId, categoryId)
             if (response.isSuccessful) {
-                val entries = response.body()?.data?.runs?.mapIndexed { index, run ->
+                val runs = response.body()?.data?.runs ?: emptyList()
+                val entries = runs.map { run ->
                     LeaderboardEntry(
                         rank = run.place,
                         playerName = run.run.players.firstOrNull()?.player?.name ?: "Unknown",
                         timeMs = (run.run.times.primaryTime * 1000).toLong(),
                         date = run.run.date?.let { parseIsoDate(it) }
                     )
-                }?.sortedBy { it.rank } ?: emptyList()
+                }
                 Result.success(entries)
             } else {
                 Result.failure(Exception("Failed to get leaderboard: ${response.code()}"))

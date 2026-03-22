@@ -267,12 +267,12 @@ fun GameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = uiState.gameName,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -280,14 +280,14 @@ fun GameScreen(
                     }
                 },
                 actions = {
-                    if (uiState.selectedCategoryForAction != null) {
+                    uiState.selectedCategoryForAction?.let { selectedCategory ->
                         IconButton(onClick = {
-                            viewModel.showEditCategoryDialog(uiState.selectedCategoryForAction)
+                            viewModel.showEditCategoryDialog(selectedCategory)
                         }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
                         IconButton(onClick = {
-                            viewModel.showDeleteConfirm(uiState.selectedCategoryForAction)
+                            viewModel.showDeleteConfirm(selectedCategory)
                         }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
@@ -401,158 +401,163 @@ fun GameScreen(
     }
 
     // Edit Category Dialog
-    if (uiState.showEditCategoryDialog && uiState.selectedCategory != null) {
-        LaunchedEffect(uiState.selectedCategory) {
-            editCategoryName = uiState.selectedCategory.name
-        }
-        AlertDialog(
-            onDismissRequest = { viewModel.hideEditCategoryDialog() },
-            title = { Text("Edit Category") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = editCategoryName,
-                        onValueChange = { editCategoryName = it },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newPbTime,
-                        onValueChange = { newPbTime = it },
-                        label = { Text("PB Time (ms)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newRunCount,
-                        onValueChange = { newRunCount = it },
-                        label = { Text("Run Count") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateCategory(uiState.selectedCategory!!, editCategoryName)
-                        if (newPbTime.isNotBlank()) {
-                            viewModel.updateCategoryPb(
-                                uiState.selectedCategory!!.id,
-                                newPbTime.toLongOrNull() ?: 0
-                            )
-                        }
-                        if (newRunCount.isNotBlank()) {
-                            viewModel.updateCategoryRunCount(
-                                uiState.selectedCategory!!.id,
-                                newRunCount.toIntOrNull() ?: 0
-                            )
-                        }
-                        viewModel.hideEditCategoryDialog()
-                    }
-                ) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideEditCategoryDialog() }) {
-                    Text("Cancel")
-                }
+    if (uiState.showEditCategoryDialog) {
+        uiState.selectedCategory?.let { selectedCategory ->
+            LaunchedEffect(selectedCategory) {
+                editCategoryName = selectedCategory.name
             }
-        )
+            AlertDialog(
+                onDismissRequest = { viewModel.hideEditCategoryDialog() },
+                title = { Text("Edit Category") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = editCategoryName,
+                            onValueChange = { editCategoryName = it },
+                            label = { Text("Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = newPbTime,
+                            onValueChange = { newPbTime = it },
+                            label = { Text("PB Time (ms)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = newRunCount,
+                            onValueChange = { newRunCount = it },
+                            label = { Text("Run Count") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateCategory(selectedCategory, editCategoryName)
+                            if (newPbTime.isNotBlank()) {
+                                viewModel.updateCategoryPb(
+                                    selectedCategory.id,
+                                    newPbTime.toLongOrNull() ?: 0
+                                )
+                            }
+                            if (newRunCount.isNotBlank()) {
+                                viewModel.updateCategoryRunCount(
+                                    selectedCategory.id,
+                                    newRunCount.toIntOrNull() ?: 0
+                                )
+                            }
+                            viewModel.hideEditCategoryDialog()
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideEditCategoryDialog() }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 
     // Delete Confirmation Dialog
-    if (uiState.showDeleteConfirm && uiState.selectedCategory != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideDeleteConfirm() },
-            title = { Text("Delete Category") },
-            text = { Text("Are you sure you want to delete '${uiState.selectedCategory!!.name}'? This will also delete all splits.") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.deleteCategory(uiState.selectedCategory!!) }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+    if (uiState.showDeleteConfirm) {
+        uiState.selectedCategory?.let { selectedCategory ->
+            AlertDialog(
+                onDismissRequest = { viewModel.hideDeleteConfirm() },
+                title = { Text("Delete Category") },
+                text = { Text("Are you sure you want to delete '${selectedCategory.name}'? This will also delete all splits.") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.deleteCategory(selectedCategory) }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideDeleteConfirm() }) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 
     // Category Bottom Sheet
-    if (uiState.showCategoryBottomSheet && uiState.selectedCategory != null) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.hideCategoryBottomSheet() }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+    if (uiState.showCategoryBottomSheet) {
+        uiState.selectedCategory?.let { selectedCategory ->
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.hideCategoryBottomSheet() }
             ) {
-                Text(
-                    text = uiState.selectedCategory!!.name,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Launch Timer option
-                Card(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {
-                                // Launch timer with this category
-                                viewModel.hideCategoryBottomSheet()
-                                // TODO: Launch timer service
-                            }
-                        )
+                        .padding(16.dp)
                 ) {
-                    Row(
+                    Text(
+                        text = selectedCategory.name,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Launch Timer option
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .combinedClickable(
+                                onClick = {
+                                    // Launch timer with this category
+                                    viewModel.hideCategoryBottomSheet()
+                                    // TODO: Launch timer service
+                                }
+                            )
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Launch Timer")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Launch Timer")
+                        }
                     }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // View & Edit Splits option
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {
-                                viewModel.hideCategoryBottomSheet()
-                                onNavigateToSplits(uiState.selectedCategory!!.id)
-                            }
-                        )
-                ) {
-                    Row(
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // View & Edit Splits option
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .combinedClickable(
+                                onClick = {
+                                    viewModel.hideCategoryBottomSheet()
+                                    onNavigateToSplits(selectedCategory.id)
+                                }
+                            )
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("View & Edit Splits")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("View & Edit Splits")
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // PB and Run count info
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -560,11 +565,11 @@ fun GameScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("PB", style = MaterialTheme.typography.labelMedium)
-                        Text(formatTime(uiState.selectedCategory!!.pbTimeMs))
+                        Text(formatTime(selectedCategory.pbTimeMs))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Runs", style = MaterialTheme.typography.labelMedium)
-                        Text(uiState.selectedCategory!!.runCount.toString())
+                        Text(selectedCategory.runCount.toString())
                     }
                 }
             }
