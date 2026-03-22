@@ -553,6 +553,7 @@ fun GameScreen(
                             Icon(Icons.Default.Edit, contentDescription = null)
                             Spacer(modifier = Modifier.width(16.dp))
                             Text("View & Edit Splits")
+                        }
                     }
                 }
 

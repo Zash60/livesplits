@@ -428,7 +428,8 @@ fun SplitsScreen(
                     ) {
                         Text("Save")
                     }
-                },
+                }
+            },
             dismissButton = {
                 TextButton(onClick = { viewModel.hideEditSegmentDialog() }) {
                     Text("Cancel")
