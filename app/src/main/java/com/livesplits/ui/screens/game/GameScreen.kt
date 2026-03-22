@@ -1,5 +1,4 @@
 package com.livesplits.ui.screens.game
-
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -264,6 +263,7 @@ fun GameScreen(
         viewModel.init(gameId)
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -489,6 +489,7 @@ fun GameScreen(
     }
 
     // Category Bottom Sheet
+    @OptIn(ExperimentalMaterial3Api::class)
     if (uiState.showCategoryBottomSheet) {
         uiState.selectedCategory?.let { selectedCategory ->
             ModalBottomSheet(
@@ -578,6 +579,7 @@ fun GameScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CategoriesTab(
     categories: List<CategoryDomain>,

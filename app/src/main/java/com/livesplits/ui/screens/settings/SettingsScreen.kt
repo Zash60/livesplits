@@ -142,6 +142,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -540,7 +541,6 @@ fun ColorGrid(
     val rows = (colors.size + columns - 1) / columns
 
     Column(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         for (row in 0 until rows) {

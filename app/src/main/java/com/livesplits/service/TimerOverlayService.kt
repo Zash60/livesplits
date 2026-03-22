@@ -17,6 +17,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.livesplits.R
 import com.livesplits.data.local.entity.Segment
 import com.livesplits.data.settings.AppSettings
@@ -267,11 +268,11 @@ class TimerOverlayService : Service() {
 
     private fun recordSplit() {
         if (currentSplitIndex < segments.size) {
-            val splitTime = currentTimeMs - accumulatedSplitTimes.lastOrNull() ?: 0L
+            val splitTime = currentTimeMs - (accumulatedSplitTimes.lastOrNull() ?: 0L)
             accumulatedSplitTimes.add(currentTimeMs)
             updateDelta()
             currentSplitIndex++
-            
+
             if (currentSplitIndex >= segments.size) {
                 finishTimer()
             }
@@ -512,9 +513,9 @@ class TimerOverlayService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("LiveSplits Timer")
             .setContentText("Timer is running")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setOngoing(true)
-            .addAction(R.drawable.ic_launcher_foreground, "Close Timer", pendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close Timer", pendingIntent)
             .build()
     }
 

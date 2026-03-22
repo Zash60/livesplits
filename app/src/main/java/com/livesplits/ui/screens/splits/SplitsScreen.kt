@@ -193,6 +193,7 @@ fun SplitsScreen(
         viewModel.init(categoryId)
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(

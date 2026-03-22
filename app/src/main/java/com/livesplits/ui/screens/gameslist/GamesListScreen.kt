@@ -166,6 +166,7 @@ fun GamesListScreen(
     var editGameName by remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         topBar = {
             TopAppBar(
