@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import com.livesplits.domain.model.CategoryDomain
 import com.livesplits.domain.model.LeaderboardEntry
 import com.livesplits.domain.model.SpeedrunCategorySuggestion
@@ -268,10 +269,10 @@ class GameViewModel @Inject constructor(
 
     fun selectTab(tabIndex: Int) {
         _uiState.value = _uiState.value.copy(selectedTab = tabIndex)
-        
+
         // Auto-load leaderboard when switching to leaderboard tab
         if (tabIndex == 1) {
-            viewModel.loadLeaderboardForCurrentGame()
+            loadLeaderboardForCurrentGame()
         }
     }
 }
