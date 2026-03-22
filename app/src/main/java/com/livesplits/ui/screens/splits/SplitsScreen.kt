@@ -428,14 +428,14 @@ fun SplitsScreen(
                     ) {
                         Text("Save")
                     }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideEditSegmentDialog() }) {
+                        Text("Cancel")
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideEditSegmentDialog() }) {
-                    Text("Cancel")
-                }
-            }
-        )
+            )
+        }
     }
 
     // Delete Confirmation Dialog
