@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@drawable/timer_overlay_background">
+
+    <!-- Timer Display -->
+    <TextView
+        android:id="@+id/timerTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00.00"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:textColor="#00FF00"
+        tools:ignore="HardcodedText" />
+
+    <!-- Delta Display (optional) -->
+    <TextView
+        android:id="@+id/deltaTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+0.00"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:textColor="#FF0000"
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
+
+    <!-- Split Name Display (optional) -->
+    <TextView
+        android:id="@+id/splitNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Current Split"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        tools:ignore="HardcodedText" />
+
+</LinearLayout>

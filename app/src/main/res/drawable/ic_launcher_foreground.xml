@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:translateX="27"
+        android:translateY="27">
+        <!-- Timer circle -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+        <!-- Timer hands -->
+        <path
+            android:fillColor="#6200EE"
+            android:pathData="M54,54L54,30M54,54L70,54"/>
+        <!-- Center dot -->
+        <path
+            android:fillColor="#6200EE"
+            android:pathData="M54,54m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
+    </group>
+</vector>
