@@ -6,19 +6,19 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
-import com.livesplits.R
 import com.livesplits.data.local.entity.Segment
 import com.livesplits.data.settings.AppSettings
 import com.livesplits.data.settings.SettingsRepository
@@ -87,10 +87,67 @@ class TimerOverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        
+
         // Load settings
         CoroutineScope(Dispatchers.IO).launch {
             settings = settingsRepository.settings.first()
+        }
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private fun createOverlayView(): View {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(16, 16, 16, 16)
+
+            // Background
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.argb(128, 0, 0, 0))
+                cornerRadius = 16f
+            }
+
+            // Timer TextView
+            timerTextView = TextView(this@apply.context).apply {
+                text = "00:00.00"
+                textSize = 48f
+                setTypeface(null, Typeface.BOLD)
+                setTextColor(Color.GREEN)
+                gravity = Gravity.CENTER
+            }
+            addView(timerTextView, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+
+            // Delta TextView
+            deltaTextView = TextView(this@apply.context).apply {
+                text = "+0.00"
+                textSize = 18f
+                setTypeface(null, Typeface.BOLD)
+                setTextColor(Color.RED)
+                gravity = Gravity.CENTER
+                visibility = View.GONE
+            }
+            addView(deltaTextView, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+
+            // Split Name TextView
+            splitNameTextView = TextView(this@apply.context).apply {
+                text = "Current Split"
+                textSize = 14f
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+                visibility = View.GONE
+            }
+            addView(splitNameTextView, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 4
+            })
         }
     }
 
@@ -140,13 +197,8 @@ class TimerOverlayService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
 
-        // Create overlay view
-        val layoutInflater = LayoutInflater.from(this)
-        overlayView = layoutInflater.inflate(R.layout.overlay_timer, null)
-
-        timerTextView = overlayView?.findViewById(R.id.timerTextView)
-        splitNameTextView = overlayView?.findViewById(R.id.splitNameTextView)
-        deltaTextView = overlayView?.findViewById(R.id.deltaTextView)
+        // Create overlay view programmatically
+        overlayView = createOverlayView()
 
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
