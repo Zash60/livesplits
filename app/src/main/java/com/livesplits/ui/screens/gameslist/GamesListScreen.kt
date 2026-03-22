@@ -17,9 +17,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import com.livesplits.domain.model.GameDomain
+import com.livesplits.domain.model.SpeedrunGameSuggestion
+import com.livesplits.network.SpeedrunRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,7 +40,10 @@ data class GamesListUiState(
     val showDeleteConfirm: Boolean = false,
     val selectedGame: GameDomain? = null,
     val showImportInstalledGames: Boolean = false,
-    val selectedGameForAction: GameDomain? = null // For long press actions
+    val selectedGameForAction: GameDomain? = null,
+    val showSpeedrunSearch: Boolean = false,
+    val speedrunSearchQuery: String = "",
+    val speedrunSuggestions: List<SpeedrunGameSuggestion> = emptyList()
 )
 
 @HiltViewModel
@@ -40,11 +51,14 @@ class GamesListViewModel @Inject constructor(
     private val getGamesUseCase: com.livesplits.domain.usecase.game.GetGamesUseCase,
     private val insertGameUseCase: com.livesplits.domain.usecase.game.InsertGameUseCase,
     private val updateGameUseCase: com.livesplits.domain.usecase.game.UpdateGameUseCase,
-    private val deleteGameUseCase: com.livesplits.domain.usecase.game.DeleteGameUseCase
+    private val deleteGameUseCase: com.livesplits.domain.usecase.game.DeleteGameUseCase,
+    private val speedrunRepository: SpeedrunRepository
 ) : androidx.lifecycle.ViewModel() {
 
     private val _uiState = MutableStateFlow(GamesListUiState())
     val uiState: StateFlow<GamesListUiState> = _uiState
+
+    private var searchJob: Job? = null
 
     init {
         loadGames()
@@ -58,6 +72,32 @@ class GamesListViewModel @Inject constructor(
                     games = games,
                     isLoading = false
                 )
+            }
+        }
+    }
+
+    fun searchSpeedrunGames(query: String) {
+        searchJob?.cancel()
+        _uiState.value = _uiState.value.copy(speedrunSearchQuery = query)
+        
+        if (query.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                speedrunSuggestions = emptyList(),
+                showSpeedrunSearch = false
+            )
+            return
+        }
+
+        searchJob = viewModelScope.launch {
+            delay(300)
+            val result = speedrunRepository.searchGames(query)
+            result.onSuccess { suggestions ->
+                _uiState.value = _uiState.value.copy(
+                    speedrunSuggestions = suggestions,
+                    showSpeedrunSearch = suggestions.isNotEmpty()
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(showSpeedrunSearch = false)
             }
         }
     }
@@ -249,13 +289,43 @@ fun GamesListScreen(
             onDismissRequest = { viewModel.hideAddDialog() },
             title = { Text("Add Game") },
             text = {
-                OutlinedTextField(
-                    value = newGameName,
-                    onValueChange = { newGameName = it },
-                    label = { Text("Game Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = newGameName,
+                        onValueChange = { 
+                            newGameName = it
+                            viewModel.searchSpeedrunGames(it)
+                        },
+                        label = { Text("Game Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    // Speedrun.com suggestions
+                    if (uiState.showSpeedrunSearch && uiState.speedrunSuggestions.isNotEmpty()) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp)
+                                .padding(top = 8.dp)
+                        ) {
+                            items(uiState.speedrunSuggestions) { suggestion ->
+                                ListItem(
+                                    headlineContent = { Text(suggestion.name) },
+                                    supportingContent = { Text(suggestion.abbreviation ?: "") },
+                                    modifier = Modifier
+                                        .combinedClickable(
+                                            onClick = {
+                                                newGameName = suggestion.name
+                                                viewModel.addGame(suggestion.name, suggestion.id)
+                                            }
+                                        )
+                                        .fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(

@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -69,6 +70,7 @@ class GameViewModel @Inject constructor(
 
     private var searchJob: Job? = null
     private var currentGameId: Long = 0
+    private var currentSpeedrunGameId: String? = null
 
     fun init(gameId: Long) {
         currentGameId = gameId
@@ -81,6 +83,7 @@ class GameViewModel @Inject constructor(
             val game = getGameByIdUseCase(gameId)
             if (game != null) {
                 _uiState.value = _uiState.value.copy(gameName = game.name)
+                currentSpeedrunGameId = game.speedrunGameId
             }
         }
     }
@@ -231,6 +234,31 @@ class GameViewModel @Inject constructor(
         }
     }
 
+    fun loadLeaderboardForCurrentGame() {
+        viewModelScope.launch {
+            if (currentSpeedrunGameId == null) {
+                _uiState.value = _uiState.value.copy(
+                    isLeaderboardLoading = false,
+                    leaderboardEntries = emptyList()
+                )
+                return@launch
+            }
+            
+            // Get the first category with a speedrunCategoryId
+            val categories = getCategoriesByGameIdUseCase(currentGameId).firstOrNull() ?: emptyList()
+            val categoryWithSpeedrun = categories.firstOrNull { it.speedrunCategoryId != null }
+            
+            if (categoryWithSpeedrun != null) {
+                loadLeaderboard(currentSpeedrunGameId!!, categoryWithSpeedrun.speedrunCategoryId!!)
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLeaderboardLoading = false,
+                    leaderboardEntries = emptyList()
+                )
+            }
+        }
+    }
+
     fun onCategoryLongPress(category: CategoryDomain) {
         _uiState.value = _uiState.value.copy(selectedCategoryForAction = category)
     }
@@ -241,6 +269,11 @@ class GameViewModel @Inject constructor(
 
     fun selectTab(tabIndex: Int) {
         _uiState.value = _uiState.value.copy(selectedTab = tabIndex)
+        
+        // Auto-load leaderboard when switching to leaderboard tab
+        if (tabIndex == 1) {
+            viewModel.loadLeaderboardForCurrentGame()
+        }
     }
 }
 

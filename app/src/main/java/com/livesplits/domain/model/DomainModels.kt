@@ -7,6 +7,7 @@ data class GameDomain(
     val id: Long,
     val name: String,
     val packageName: String?,
+    val speedrunGameId: String?,
     val createdAt: Long
 )
 

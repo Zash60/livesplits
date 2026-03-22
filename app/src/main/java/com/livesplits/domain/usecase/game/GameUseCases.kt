@@ -38,8 +38,8 @@ class SearchGamesUseCase @Inject constructor(
 class InsertGameUseCase @Inject constructor(
     private val gameDao: GameDao
 ) {
-    suspend operator fun invoke(name: String, packageName: String? = null): Long {
-        val game = Game(name = name, packageName = packageName)
+    suspend operator fun invoke(name: String, packageName: String? = null, speedrunGameId: String? = null): Long {
+        val game = Game(name = name, packageName = packageName, speedrunGameId = speedrunGameId)
         return gameDao.insertGame(game)
     }
 }
@@ -66,6 +66,7 @@ fun Game.toDomain(): GameDomain = GameDomain(
     id = id,
     name = name,
     packageName = packageName,
+    speedrunGameId = speedrunGameId,
     createdAt = createdAt
 )
 
@@ -73,5 +74,6 @@ fun GameDomain.toEntity(): Game = Game(
     id = id,
     name = name,
     packageName = packageName,
+    speedrunGameId = speedrunGameId,
     createdAt = createdAt
 )

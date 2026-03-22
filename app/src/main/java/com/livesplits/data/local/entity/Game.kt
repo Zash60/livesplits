@@ -11,5 +11,6 @@ data class Game(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val packageName: String? = null, // For linking to installed apps
+    val speedrunGameId: String? = null, // For speedrun.com API integration
     val createdAt: Long = System.currentTimeMillis()
 )
