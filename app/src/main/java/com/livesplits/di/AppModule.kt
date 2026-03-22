@@ -8,7 +8,6 @@ import com.livesplits.data.local.dao.GameDao
 import com.livesplits.data.local.dao.SegmentDao
 import com.livesplits.data.settings.SettingsRepository
 import com.livesplits.network.SpeedrunRepository
-import com.livesplits.network.SplitsIoRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,11 +62,5 @@ object RepositoryModule {
     @Singleton
     fun provideSpeedrunRepository(): SpeedrunRepository {
         return SpeedrunRepository()
-    }
-
-    @Provides
-    @Singleton
-    fun provideSplitsIoRepository(): SplitsIoRepository {
-        return SplitsIoRepository()
     }
 }
