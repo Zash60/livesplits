@@ -68,8 +68,10 @@ class GameViewModel @Inject constructor(
     val uiState: StateFlow<GameUiState> = _uiState
 
     private var searchJob: Job? = null
+    private var currentGameId: Long = 0
 
     fun init(gameId: Long) {
+        currentGameId = gameId
         loadGame(gameId)
         loadCategories(gameId)
     }
@@ -169,9 +171,7 @@ class GameViewModel @Inject constructor(
 
     fun addCategory(name: String, speedrunCategoryId: String? = null) {
         viewModelScope.launch {
-            // Get current game ID from state - in real app, pass this properly
-            val gameId = 1L // TODO: Get from saved state
-            insertCategoryUseCase(gameId, name, speedrunCategoryId = speedrunCategoryId)
+            insertCategoryUseCase(currentGameId, name, speedrunCategoryId = speedrunCategoryId)
             hideAddCategoryDialog()
         }
     }
